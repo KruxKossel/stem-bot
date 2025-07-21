@@ -174,7 +174,7 @@ discord.errors.Forbidden: 403 Forbidden (error code: 50013): Missing Permissions
 2025-07-21 15:00:00 INFO     discord.client logging in using static token
 2025-07-21 15:00:01 INFO     discord.gateway Shard ID None has connected to Gateway
 Stem-bot#7776 está online!
-ID do bot: 1234567890123456789
+ID do bot: SEU_BOT_ID
 Conectado a 1 servidor(es)
 Banco de dados configurado: dados\stem_bot.db
 Cog Events carregado e comandos registrados!

@@ -7,19 +7,19 @@
 #### **1. Token do Bot**
 ```env
 # ❌ NUNCA faça isso:
-TOKEN=MTIzNDU2Nzg5MDEyMzQ1Njc4OQ.ABCDEF.GHIJKLMNOPQRSTUVWXYZabcdefghijklmnop
+TOKEN=seu_token_real_aqui
 ```
 
 #### **2. Links Específicos do Bot**
 ```
 # ❌ NUNCA compartilhe links como:
-https://discord.com/oauth2/authorize?client_id=1234567890123456789&permissions=268511232&scope=bot+applications.commands
+https://discord.com/oauth2/authorize?client_id=SEU_BOT_ID&permissions=PERMISSOES&scope=bot+applications.commands
 ```
 
 #### **3. IDs de Aplicação**
 ```
 # ❌ NUNCA exponha IDs como:
-Client ID: 1234567890123456789
+Client ID: SEU_BOT_ID
 ```
 
 ## ✅ Como Compartilhar o Projeto
