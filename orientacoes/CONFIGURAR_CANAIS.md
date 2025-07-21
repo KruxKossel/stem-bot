@@ -34,10 +34,10 @@ Este guia explica como configurar os IDs dos canais no código do bot para que f
 #### **Localizar as linhas:**
 ```python
 # Usar ID específico do canal de boas-vindas
-welcome_channel = member.guild.get_channel(1396900097610088538)
+welcome_channel = member.guild.get_channel(1234567890123456789)
 
 # Usar ID específico do canal de saídas
-leave_channel = member.guild.get_channel(1396901336619941909)
+leave_channel = member.guild.get_channel(9876543210987654321)
 ```
 
 #### **Substituir pelos seus IDs:**
@@ -53,14 +53,14 @@ leave_channel = member.guild.get_channel(SEU_ID_CANAL_SAIDAS)
 
 #### **Antes (IDs de teste):**
 ```python
-welcome_channel = member.guild.get_channel(1396900097610088538)
-leave_channel = member.guild.get_channel(1396901336619941909)
+welcome_channel = member.guild.get_channel(1234567890123456789)
+leave_channel = member.guild.get_channel(9876543210987654321)
 ```
 
 #### **Depois (seus IDs):**
 ```python
-welcome_channel = member.guild.get_channel(1234567890123456789)  # Seu canal de boas-vindas
-leave_channel = member.guild.get_channel(9876543210987654321)   # Seu canal de saídas
+welcome_channel = member.guild.get_channel(1111111111111111111)  # Seu canal de boas-vindas
+leave_channel = member.guild.get_channel(2222222222222222222)   # Seu canal de saídas
 ```
 
 ## ✅ Verificação
@@ -122,8 +122,8 @@ leave_channel = member.guild.get_channel(LEAVE_CHANNEL_ID)
 ### **Para Desenvolvimento:**
 ```python
 # IDs fixos para desenvolvimento
-WELCOME_CHANNEL_ID = 1396900097610088538  # Canal de teste
-LEAVE_CHANNEL_ID = 1396901336619941909    # Canal de teste
+WELCOME_CHANNEL_ID = 1234567890123456789  # Canal de teste
+LEAVE_CHANNEL_ID = 9876543210987654321    # Canal de teste
 
 welcome_channel = member.guild.get_channel(WELCOME_CHANNEL_ID)
 leave_channel = member.guild.get_channel(LEAVE_CHANNEL_ID)
