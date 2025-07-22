@@ -15,10 +15,11 @@
   - ✅ **applications.commands**
 
 #### **3. Configure Permissões:**
+- **Manage Server** (Gerenciar Servidor) - OBRIGATÓRIO
+- **Use Application Commands** (Usar Comandos de Aplicação) - OBRIGATÓRIO
 - **Send Messages** (Enviar Mensagens)
-- **Use Slash Commands** (Usar Comandos de Aplicação)
-- **Read Message History** (Ler Histórico)
 - **View Channels** (Ver Canais)
+- **Read Message History** (Ler Histórico)
 - **Manage Messages** (Gerenciar Mensagens)
 - **Embed Links** (Incorporar Links)
 
@@ -45,11 +46,12 @@ https://discord.com/oauth2/authorize?client_id=SEU_BOT_ID&permissions=PERMISSOES
 Após adicionar, verifique se o bot tem as permissões necessárias:
 
 #### **Permissões Essenciais:**
-- ✅ **Enviar Mensagens**
-- ✅ **Usar Comandos de Aplicação**
-- ✅ **Ler Histórico de Mensagens**
-- ✅ **Ver Canais**
-- ✅ **Gerenciar Mensagens** (para moderação)
+- ✅ **Manage Server** (OBRIGATÓRIO para sincronizar comandos)
+- ✅ **Use Application Commands** (OBRIGATÓRIO para comandos slash)
+- ✅ **Send Messages** (para responder comandos)
+- ✅ **View Channels** (para acessar canais)
+- ✅ **Read Message History** (para ler histórico)
+- ✅ **Manage Messages** (para moderação)
 
 ### **3. Configurar Canais**
 Configure os canais específicos para o bot:
@@ -69,12 +71,11 @@ Configure os canais específicos para o bot:
 ### **Após adicionar o bot:**
 1. **Execute**: `python bot.py`
 2. **Aguarde** a sincronização dos comandos
-3. **Teste**: `!ping` e `/ping`
+3. **Teste**: `/ping`
 
 ## 🎯 Resultado Esperado
 
 Após usar o link correto, o bot deve:
-- ✅ Responder a comandos de prefixo (`!ping`)
 - ✅ Responder a comandos slash (`/ping`)
 - ✅ Não mostrar mais "Integração desconhecida"
 - ✅ Aparecer online no servidor
@@ -112,7 +113,8 @@ Após usar o link correto, o bot deve:
 ### **Se comandos slash não aparecem:**
 1. Aguarde até 1 hora para sincronização global
 2. Use `/sync` para sincronização imediata
-3. Verifique permissão "Usar Comandos de Aplicação"
+3. Verifique permissão "Use Application Commands"
+4. Verifique permissão "Manage Server" (obrigatória para sincronizar)
 
 ## 📞 Suporte
 

@@ -13,7 +13,12 @@ stem-bot/
 │   ├── welcome.py     # Sistema de boas-vindas
 │   └── __init__.py
 ├── 📁 services/       # Lógica de negócio
-│   ├── events_service.py  # Operações de eventos
+│   ├── events_service.py      # Operações de eventos
+│   ├── event_formatters.py    # Formatação de embeds
+│   ├── event_handlers.py      # Handlers de comandos
+│   ├── event_validators.py    # Validação de dados
+│   ├── event_scheduler.py     # Agendador de eventos
+│   ├── event_choices.py       # Opções de comandos
 │   └── __init__.py
 ├── 📁 dados/          # Camada de dados
 │   ├── database.py    # Contexto do banco
@@ -29,13 +34,13 @@ stem-bot/
 ### 1. **Camada de Apresentação** (`cogs/`)
 
 #### **Responsabilidades:**
-- ✅ Definir comandos do bot (prefixo e slash)
+- ✅ Definir comandos slash do bot
 - ✅ Validar dados de entrada do usuário
 - ✅ Construir respostas visuais (Embeds)
 - ✅ Gerenciar interações com usuários
 
 #### **Cogs Disponíveis:**
-- **`events.py`**: Sistema de eventos (`/addevento`, `/eventos`)
+- **`events.py`**: Sistema de eventos (`/addevento_unico`, `/addrecorrente`, `/eventos`, `/modeventos`)
 - **`welcome.py`**: Sistema de boas-vindas e logs de saída
 
 ### 2. **Camada de Serviços** (`services/`)
@@ -48,6 +53,11 @@ stem-bot/
 
 #### **Services Disponíveis:**
 - **`events_service.py`**: Operações de eventos (CRUD)
+- **`event_formatters.py`**: Formatação de embeds e mensagens
+- **`event_handlers.py`**: Handlers de comandos e lógica de negócio
+- **`event_validators.py`**: Validação de dados de entrada
+- **`event_scheduler.py`**: Agendador de eventos recorrentes
+- **`event_choices.py`**: Opções predefinidas para comandos slash
 
 ### 3. **Camada de Dados** (`dados/`)
 
@@ -72,21 +82,23 @@ stem-bot/
 
 ### **Exemplo: Adicionar Evento**
 ```
-1. Usuário: /addevento "Workshop" 25/12/2024 14:00
-2. Cog: Valida formato da data/hora
-3. Service: Executa operação no banco
-4. Database: Persiste dados no SQLite
-5. Cog: Retorna embed de confirmação
+1. Usuário: /addrecorrente "Workshop" 25/12/2024 14:00
+2. Cog: Chama event_handlers.handle_add_recurring_event()
+3. Handler: Valida dados via event_validators
+4. Service: Executa operação no banco via events_service
+5. Formatter: Constrói embed via event_formatters
+6. Cog: Retorna embed de confirmação
 ```
 
 ### **Exemplo: Listar Eventos**
 ```
 1. Usuário: /eventos
-2. Cog: Chama service para buscar dados
-3. Service: Executa query no banco
-4. Database: Retorna lista de eventos
-5. Cog: Formata dados em embed
-6. Usuário: Recebe lista formatada
+2. Cog: Chama event_handlers.handle_list_user_events()
+3. Handler: Busca dados via events_service
+4. Service: Executa query no banco
+5. Formatter: Constrói embed via event_formatters
+6. Cog: Retorna embed formatado
+7. Usuário: Recebe lista formatada
 ```
 
 ## ✅ Benefícios da Arquitetura
@@ -138,6 +150,10 @@ stem-bot/
   - `time` (TEXT)
   - `link` (TEXT)
   - `created_by` (INTEGER)
+  - `type` (TEXT) - 'unico' ou 'recorrente'
+  - `status` (TEXT) - 'ativo' ou 'concluido'
+  - `frequency` (TEXT) - frequência para eventos recorrentes
+  - `recurrence_details` (TEXT) - detalhes da recorrência
   - `created_at` (TIMESTAMP)
 
 ### **Próximas Tabelas Planejadas:**

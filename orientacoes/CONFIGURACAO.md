@@ -40,10 +40,11 @@ python --version
 
 #### **Bot Permissions:**
 - ✅ **Administrator** (para desenvolvimento)
+- ✅ **Manage Server** (OBRIGATÓRIO para sincronizar comandos)
+- ✅ **Use Application Commands** (OBRIGATÓRIO para comandos slash)
 - ✅ **Send Messages**
-- ✅ **Use Slash Commands**
-- ✅ **Read Message History**
 - ✅ **View Channels**
+- ✅ **Read Message History**
 
 ### **3. Obter Token**
 
@@ -102,8 +103,19 @@ Cog Events carregado e comandos registrados!
 Cog carregado: events
 Cog Welcome carregado e comandos registrados!
 Cog carregado: welcome
-Sincronizados 6 comandos slash globalmente
+Sincronizados 10 comandos slash globalmente
+📋 Sincronizando comandos nos servidores:
+  - Servidor: [Nome do Servidor] (ID: [ID])
+    ✅ Sincronizados 10 comandos
 ```
+
+### **⚠️ Logs de Problema (Permissões):**
+```
+📋 Sincronizando comandos nos servidores:
+  - Servidor: [Nome] (ID: [ID])
+    ⚠️  Bot sem permissão 'Manage Server' em [Nome]
+```
+**Solução:** Ative a permissão "Manage Server" nas configurações do servidor.
 
 ## 🔗 Próximos Passos
 

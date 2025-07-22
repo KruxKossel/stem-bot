@@ -30,6 +30,46 @@ stem-bot/
 └── requirements.txt   # Dependências
 ```
 
+## 🔐 Permissões e Sincronização
+
+### **Permissões Obrigatórias do Bot**
+
+Para o bot funcionar corretamente, as seguintes permissões são **OBRIGATÓRIAS**:
+
+#### **No Discord Developer Portal:**
+- ✅ **Manage Server** (para sincronizar comandos slash)
+- ✅ **Use Application Commands** (para usar comandos slash)
+- ✅ **Send Messages** (para responder comandos)
+- ✅ **View Channels** (para acessar canais)
+
+#### **No Servidor Discord:**
+- ✅ **Administrator** (para desenvolvimento)
+- ✅ **Manage Server** (para sincronizar comandos)
+- ✅ **Use Application Commands** (para comandos slash)
+
+### **Sincronização de Comandos**
+
+#### **Processo Automático:**
+1. **Sincronização Global** (pode demorar até 1 hora)
+2. **Sincronização por Servidor** (mais rápido para desenvolvimento)
+
+#### **Logs de Sincronização:**
+```
+📋 Sincronizando comandos nos servidores:
+  - Servidor: [Nome] (ID: [ID])
+    ✅ Sincronizados X comandos
+    ⚠️  Bot sem permissão 'Manage Server'
+    ❌ Sem permissão para sincronizar
+```
+
+#### **Solução de Problemas:**
+- **"Bot sem permissão 'Manage Server'"**: Ative a permissão nas configurações do servidor
+- **"Sem permissão para sincronizar"**: Verifique se o bot tem permissões adequadas
+- **"0 comandos sincronizados"**: Problema de permissões ou servidor inválido
+
+### **Comando Manual de Sincronização**
+Use `/sync` (apenas administradores) para forçar sincronização manual.
+
 ## 🚀 Como Adicionar Novas Funcionalidades
 
 ### **1. Adicionar Novo Cog**
@@ -174,8 +214,8 @@ except Exception as e:
 python bot.py
 
 # Testar comandos
-!ping
-/addevento "Teste" 25/12/2024 14:00
+/ping
+/addrecorrente "Teste" 25/12/2024 14:00
 /eventos
 ```
 

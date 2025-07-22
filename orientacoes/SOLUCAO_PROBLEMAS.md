@@ -37,6 +37,7 @@ Use o link correto do seu bot:
 #### **Sintomas:**
 - Comandos `/` não aparecem ao digitar
 - Bot não responde a comandos slash
+- Mensagem "Sincronizados 0 comandos no servidor: [Nome]"
 
 #### **Soluções:**
 
@@ -48,26 +49,46 @@ O bot sincroniza automaticamente:
 ##### **B. Comando Manual de Sincronização**
 Use `/sync` (apenas administradores) para forçar sincronização.
 
-##### **C. Verificar Permissões**
-- **Usar Comandos de Aplicação** deve estar ativo
-- Bot deve ter permissões no canal
+##### **C. Verificar Permissões do Bot**
+**Permissões OBRIGATÓRIAS:**
+- ✅ **Manage Server** (para sincronizar comandos)
+- ✅ **Use Application Commands** (para usar comandos slash)
+- ✅ **Send Messages** (para responder)
+- ✅ **View Channels** (para acessar canais)
 
-### **3. Comandos de Prefixo (!) Não Funcionam**
+##### **D. Problema de Sincronização por Servidor**
+Se aparecer "⚠️ Bot sem permissão 'Manage Server' em [Servidor]":
+1. **Vá para Configurações do Servidor** > **Integrações** > **Stem-bot**
+2. **Ative a permissão "Manage Server"**
+3. **Ou remova o bot do servidor** se não for necessário
+4. **Reinicie o bot** para tentar sincronizar novamente
+
+##### **E. Verificar Logs de Sincronização**
+O bot mostra informações detalhadas:
+```
+📋 Sincronizando comandos nos servidores:
+  - Servidor: [Nome] (ID: [ID])
+    ✅ Sincronizados X comandos
+    ⚠️  Bot sem permissão 'Manage Server'
+    ❌ Sem permissão para sincronizar
+```
+
+### **3. Comandos Slash (/) Não Funcionam**
 
 #### **Sintomas:**
-- Comandos `!ping`, `!eventos` não respondem
-- Bot não reage a mensagens
+- Comandos `/ping`, `/eventos`, `/addevento_unico` não aparecem
+- Bot não responde a comandos slash
 
 #### **Soluções:**
 
 ##### **A. Verificar Permissões do Bot**
+- **Usar Comandos de Aplicação**
 - **Enviar Mensagens**
-- **Ler Histórico de Mensagens**
 - **Ver Canais**
 
-##### **B. Verificar Intents**
-- **Message Content Intent** deve estar ativo
-- Reinicie o bot após alterações
+##### **B. Sincronizar Comandos**
+- Use `/sync` (apenas administradores)
+- Aguarde até 1 hora para sincronização global
 
 ##### **C. Verificar Canal**
 - Bot deve ter permissões no canal específico
@@ -120,19 +141,12 @@ discord.errors.Forbidden: 403 Forbidden (error code: 50013): Missing Permissions
 
 ### **Comandos para Testar:**
 
-#### **Comandos de Prefixo:**
-```
-!ping
-!addevento "Teste" 25/12/2024 14:00
-!eventos
-```
-
-#### **Comandos Slash:**
+#### **Comandos Slash Disponíveis:**
 ```
 /ping
 /addevento
 /eventos
-/welcome
+/help
 /sync
 ```
 

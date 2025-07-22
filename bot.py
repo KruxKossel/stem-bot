@@ -13,7 +13,7 @@ intents.message_content = True
 intents.members = True
 intents.guilds = True
 
-# Criar bot
+# Criar bot (apenas slash commands, mas ainda precisa do prefixo para compatibilidade)
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
 # Configurar banco de dados
@@ -61,49 +61,27 @@ async def on_ready():
         print(f"Sincronizados {len(synced)} comandos slash globalmente")
         
         # Para desenvolvimento, também sincronizar por servidor (mais rápido)
+        print(f"\n📋 Sincronizando comandos nos servidores:")
         for guild in bot.guilds:
+            print(f"  - Servidor: {guild.name} (ID: {guild.id})")
             try:
+                # Verificar se o bot tem permissões no servidor
+                if not guild.me.guild_permissions.manage_guild:
+                    print(f"    ⚠️  Bot sem permissão 'Manage Server' em {guild.name}")
+                    continue
+                
                 synced_guild = await bot.tree.sync(guild=guild)
-                print(f"Sincronizados {len(synced_guild)} comandos no servidor: {guild.name}")
+                print(f"    ✅ Sincronizados {len(synced_guild)} comandos")
+                
+            except discord.Forbidden:
+                print(f"    ❌ Sem permissão para sincronizar em {guild.name}")
+            except discord.HTTPException as e:
+                print(f"    ❌ Erro HTTP ao sincronizar em {guild.name}: {e}")
             except Exception as e:
-                print(f"Erro ao sincronizar no servidor {guild.name}: {e}")
+                print(f"    ❌ Erro ao sincronizar em {guild.name}: {e}")
                 
     except Exception as e:
         print(f"Erro ao sincronizar comandos slash: {e}")
-
-@bot.command()
-async def ping(ctx):
-    """Comando de teste para verificar se o bot está funcionando"""
-    latency = round(bot.latency * 1000)
-    await ctx.send(f'🏓 Pong! Latência: {latency}ms')
-
-@bot.command()
-async def test(ctx):
-    """Comando de teste simples"""
-    await ctx.send('✅ Bot está funcionando! Comandos de prefixo ativos.')
-
-@bot.command()
-async def help(ctx):
-    """Comando de ajuda simples"""
-    embed = discord.Embed(
-        title="🤖 Comandos do STEM-GIRL Bot",
-        description="Lista de comandos disponíveis:",
-        color=discord.Color.blue()
-    )
-    
-    embed.add_field(
-        name="📅 Eventos",
-        value="`!addevento` - Adicionar evento\n`!eventos` - Listar eventos da semana",
-        inline=False
-    )
-    
-    embed.add_field(
-        name="🎯 Geral",
-        value="`!ping` - Testar latência\n`!test` - Teste simples\n`!help` - Mostrar esta ajuda",
-        inline=False
-    )
-    
-    await ctx.send(embed=embed)
 
 @bot.tree.command(name="ping", description="Testa a latência do bot")
 async def ping_slash(interaction: discord.Interaction):
@@ -121,8 +99,14 @@ async def help_slash(interaction: discord.Interaction):
     )
     
     embed.add_field(
-        name="📅 Eventos",
-        value="`/addevento` - Adicionar evento\n`/eventos` - Listar eventos da semana",
+        name="📅 Eventos (Usuários)",
+        value="`/eventos` - Listar eventos ativos e futuros",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="📅 Eventos (Administradores)",
+        value="`/addevento_unico` - Adicionar evento único\n`/addrecorrente` - Adicionar evento recorrente (com seleção de frequência e detalhes)\n`/alterarevento` - Alterar detalhes de evento (com seleção de frequência, detalhes e status)\n`/modeventos` - Listar todos os eventos\n`/concluirevento` - Marcar evento como concluído",
         inline=False
     )
     
@@ -134,16 +118,6 @@ async def help_slash(interaction: discord.Interaction):
     
     await interaction.response.send_message(embed=embed)
 
-@bot.event
-async def on_command_error(ctx, error):
-    """Evento para tratar erros de comandos"""
-    if isinstance(error, commands.CommandNotFound):
-        await ctx.send(f"❌ Comando não encontrado: `{ctx.message.content}`\nUse `!help` para ver comandos disponíveis.")
-    elif isinstance(error, commands.MissingPermissions):
-        await ctx.send("❌ Você não tem permissão para usar este comando.")
-    else:
-        await ctx.send(f"❌ Erro: {error}")
-
 @bot.tree.command(name="sync", description="Sincroniza os comandos slash (apenas administradores)")
 async def sync_slash(interaction: discord.Interaction):
     """Comando para sincronizar comandos slash"""
@@ -151,10 +125,10 @@ async def sync_slash(interaction: discord.Interaction):
         await interaction.response.send_message("❌ Você precisa ser administrador para usar este comando.", ephemeral=True)
         return
     
+    # Responder imediatamente para evitar timeout
+    await interaction.response.defer(ephemeral=True)
+    
     try:
-        # Recarregar Cogs
-        await load_cogs()
-        
         # Sincronizar comandos globalmente
         synced = await bot.tree.sync()
         
@@ -179,10 +153,10 @@ async def sync_slash(interaction: discord.Interaction):
                 inline=False
             )
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
-        await interaction.response.send_message(f"❌ Erro ao sincronizar: {e}", ephemeral=True)
+        await interaction.followup.send(f"❌ Erro ao sincronizar: {e}", ephemeral=True)
 
 # Executar o bot
 if __name__ == '__main__':

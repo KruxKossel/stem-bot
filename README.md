@@ -62,12 +62,19 @@ python bot.py
 ## 🎯 Comandos Disponíveis
 
 ### **Eventos:**
-- `/addevento` - Adicionar novo evento
+- `/addevento_unico` - Adicionar evento único
+- `/addrecorrente` - Adicionar evento recorrente
 - `/eventos` - Listar eventos da semana
+- `/modeventos` - Listar todos os eventos (admin)
+- `/alterarevento` - Alterar evento (admin)
+- `/concluirevento` - Marcar evento como concluído (admin)
+- `/limpar_duplicatas` - Remover eventos duplicados (admin)
 
 ### **Administração:**
 - `/welcome` - Testar mensagem de boas-vindas
 - `/sync` - Sincronizar comandos (admin)
+- `/ping` - Testar latência do bot
+- `/help` - Mostrar todos os comandos
 
 ## 📞 Suporte
 
