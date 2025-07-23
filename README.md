@@ -54,27 +54,30 @@ python bot.py
 
 ### **Para Administradores:**
 - [⚙️ Configuração Inicial](orientacoes/CONFIGURACAO.md)
-- [🔗 Adicionar Bot ao Servidor](orientacoes/ADICIONAR_BOT.md)
 - [🔧 Configurar Canais](orientacoes/CONFIGURAR_CANAIS.md)
 - [🚨 Solução de Problemas](orientacoes/SOLUCAO_PROBLEMAS.md)
 - [🛡️ Guia de Segurança](orientacoes/SEGURANCA.md)
+- [📅 Sistema de Eventos](orientacoes/EVENTOS.md)
 
 ## 🎯 Comandos Disponíveis
 
-### **Eventos:**
-- `/addevento_unico` - Adicionar evento único
-- `/addrecorrente` - Adicionar evento recorrente
-- `/eventos` - Listar eventos da semana
-- `/modeventos` - Listar todos os eventos (admin)
-- `/alterarevento` - Alterar evento (admin)
-- `/concluirevento` - Marcar evento como concluído (admin)
-- `/limpar_duplicatas` - Remover eventos duplicados (admin)
+### **📅 Eventos (Usuários):**
+- `/eventos` - Listar eventos ativos da semana atual
 
-### **Administração:**
-- `/welcome` - Testar mensagem de boas-vindas
-- `/sync` - Sincronizar comandos (admin)
+### **📅 Eventos (Administradores):**
+- `/addevento` - Adicionar evento (único ou recorrente) com seleção de frequência
+- `/alterarevento` - Alterar detalhes de evento (com seleção de frequência, detalhes e status)
+- `/modeventos` - Listar eventos com filtros (ativos, concluídos, cancelados, etc.)
+- `/concluirevento` - Marcar evento como concluído
+
+### **🔧 Administração:**
+- `/sync` - Sincronizar comandos (apenas administradores)
 - `/ping` - Testar latência do bot
 - `/help` - Mostrar todos os comandos
+
+### **👋 Sistema de Boas-vindas:**
+- **Automático**: Mensagens de boas-vindas para novos membros
+- **Automático**: Logs de saída para moderação
 
 ## 📞 Suporte
 

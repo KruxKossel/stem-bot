@@ -94,7 +94,111 @@ O bot mostra informações detalhadas:
 - Bot deve ter permissões no canal específico
 - Teste em diferentes canais
 
-### **4. Bot Não Inicia**
+### **4. Problema com Sincronização de Comandos (`/sync`)**
+
+#### **Sintomas:**
+- Comando `/sync` não funciona como esperado
+- Comandos não aparecem imediatamente após sincronização
+- Novos parâmetros não são reconhecidos
+- Novas choices não são atualizadas
+
+#### **Causas:**
+- **Limitações da API do Discord**: Sincronização global pode demorar até 1 hora
+- **Rate Limiting**: Discord limita quantas sincronizações podem ser feitas
+- **Cache do Discord**: Comandos podem ficar em cache por até 1 hora
+- **Permissões**: Bot precisa de permissão "Manage Server"
+
+#### **Soluções:**
+
+##### **A. Remover e Adicionar Bot Novamente (Mais Confiável)**
+```bash
+# 1. Remover o bot do servidor
+# 2. Aguardar 5-10 minutos
+# 3. Adicionar o bot novamente com as mesmas permissões
+# 4. Executar /sync
+```
+
+**Vantagens:**
+- ✅ Força atualização completa
+- ✅ Resolve problemas de cache
+- ✅ Garante sincronização imediata
+
+**Desvantagens:**
+- ❌ Perde configurações do servidor
+- ❌ Pode perder permissões personalizadas
+- ❌ Processo demorado
+
+##### **B. Aguardar Propagação Natural**
+```bash
+# 1. Executar /sync
+# 2. Aguardar até 1 hora
+# 3. Comandos aparecerão automaticamente
+```
+
+**Vantagens:**
+- ✅ Não perde configurações
+- ✅ Processo automático
+- ✅ Sem intervenção manual
+
+**Desvantagens:**
+- ❌ Pode demorar muito
+- ❌ Não garante sincronização
+- ❌ Pode falhar silenciosamente
+
+##### **C. Comando `/sync` Melhorado**
+O comando agora fornece informações detalhadas:
+
+```
+🔄 Sincronizando Comandos
+Iniciando sincronização...
+
+📡 Sincronização Local
+Sincronizando comandos no servidor atual...
+
+✅ Servidor Atual
+Sincronizados 8 comandos no servidor!
+
+🌐 Sincronização Global
+Sincronizando comandos globalmente...
+
+✅ Global
+Sincronizados 8 comandos globalmente!
+
+ℹ️ Informações Importantes
+• Sincronização local: Imediata
+• Sincronização global: Pode demorar até 1 hora
+• Novos comandos: Pode ser necessário remover e adicionar o bot novamente
+```
+
+#### **Erros Comuns do `/sync`:**
+
+##### **Erro de Permissão:**
+```
+❌ Erro de Permissão
+O bot não tem permissão para sincronizar comandos neste servidor.
+
+🔧 Solução
+• Verifique se o bot tem permissão 'Manage Server'
+• Tente remover e adicionar o bot novamente
+```
+
+##### **Erro HTTP:**
+```
+❌ Erro HTTP
+Erro ao sincronizar comandos: 429 Too Many Requests
+
+🔧 Possíveis Soluções
+• Aguarde alguns minutos e tente novamente
+• Remova e adicione o bot novamente
+• Verifique se há muitos comandos (máximo 100)
+```
+
+#### **Recomendações:**
+- **Para Desenvolvimento**: Use sincronização local, teste em servidor de desenvolvimento
+- **Para Produção**: Planeje atualizações com antecedência, monitore logs
+- **Para Novos Comandos**: Desenvolva completamente, execute `/sync`, aguarde até 1 hora
+
+### **5. Bot Não Inicia**
 
 #### **Sintomas:**
 - Erro ao executar `python bot.py`

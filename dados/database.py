@@ -1,6 +1,10 @@
 import sqlite3
 import os
+import logging
 from pathlib import Path
+
+# Configurar logging
+logger = logging.getLogger(__name__)
 
 class DatabaseContext:
     """Classe para gerenciar o contexto do banco de dados"""
@@ -11,76 +15,102 @@ class DatabaseContext:
     
     def setup_database(self):
         """Configura o banco de dados e cria as tabelas necessárias"""
-        # Criar pasta dados se não existir
-        self.db_path.parent.mkdir(exist_ok=True)
-        
-        # Conectar ao banco de dados
-        self.connection = sqlite3.connect(self.db_path)
-        cursor = self.connection.cursor()
-        
-        # Verificar se a tabela events existe
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")
-        table_exists = cursor.fetchone() is not None
-        
-        if not table_exists:
-            # Criar tabela de eventos com todas as colunas
-            cursor.execute('''
-                CREATE TABLE events (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    date TEXT NOT NULL,
-                    time TEXT NOT NULL,
-                    link TEXT,
-                    created_by INTEGER NOT NULL,
-                    type TEXT NOT NULL DEFAULT 'unico',
-                    status TEXT NOT NULL DEFAULT 'ativo',
-                    frequency TEXT,
-                    recurrence_details TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            print("Tabela events criada com sucesso!")
-        else:
-            # Verificar se as novas colunas existem
-            cursor.execute("PRAGMA table_info(events)")
-            columns = [column[1] for column in cursor.fetchall()]
+        try:
+            # Criar pasta dados se não existir
+            self.db_path.parent.mkdir(exist_ok=True)
             
-            # Adicionar colunas que não existem
-            if 'type' not in columns:
-                cursor.execute('ALTER TABLE events ADD COLUMN type TEXT NOT NULL DEFAULT "unico"')
-                print("Coluna 'type' adicionada à tabela events")
+            # Conectar ao banco de dados
+            self.connection = sqlite3.connect(self.db_path)
+            cursor = self.connection.cursor()
             
-            if 'status' not in columns:
-                cursor.execute('ALTER TABLE events ADD COLUMN status TEXT NOT NULL DEFAULT "ativo"')
-                print("Coluna 'status' adicionada à tabela events")
+            # Verificar se a tabela events existe
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")
+            table_exists = cursor.fetchone() is not None
             
-            if 'frequency' not in columns:
-                cursor.execute('ALTER TABLE events ADD COLUMN frequency TEXT')
-                print("Coluna 'frequency' adicionada à tabela events")
+            if not table_exists:
+                # Criar tabela de eventos com todas as colunas (incluindo auto-conclusão)
+                cursor.execute('''
+                    CREATE TABLE events (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT NOT NULL,
+                        date TEXT NOT NULL,
+                        time TEXT NOT NULL,
+                        link TEXT,
+                        created_by INTEGER NOT NULL,
+                        type TEXT NOT NULL DEFAULT 'unico',
+                        status TEXT NOT NULL DEFAULT 'ativo',
+                        frequency TEXT,
+                        recurrence_details TEXT,
+                        auto_complete BOOLEAN DEFAULT 1,
+                        complete_after_hours INTEGER DEFAULT 1,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                logger.info("Tabela events criada com sucesso!")
+            else:
+                # Verificar se as novas colunas existem
+                cursor.execute("PRAGMA table_info(events)")
+                columns = [column[1] for column in cursor.fetchall()]
+                
+                # Adicionar colunas que não existem
+                if 'type' not in columns:
+                    cursor.execute('ALTER TABLE events ADD COLUMN type TEXT NOT NULL DEFAULT "unico"')
+                    logger.info("Coluna 'type' adicionada à tabela events")
+                
+                if 'status' not in columns:
+                    cursor.execute('ALTER TABLE events ADD COLUMN status TEXT NOT NULL DEFAULT "ativo"')
+                    logger.info("Coluna 'status' adicionada à tabela events")
+                
+                if 'frequency' not in columns:
+                    cursor.execute('ALTER TABLE events ADD COLUMN frequency TEXT')
+                    logger.info("Coluna 'frequency' adicionada à tabela events")
+                
+                if 'recurrence_details' not in columns:
+                    cursor.execute('ALTER TABLE events ADD COLUMN recurrence_details TEXT')
+                    logger.info("Coluna 'recurrence_details' adicionada à tabela events")
+                
+                if 'auto_complete' not in columns:
+                    cursor.execute('ALTER TABLE events ADD COLUMN auto_complete BOOLEAN DEFAULT 1')
+                    logger.info("Coluna 'auto_complete' adicionada à tabela events")
+                
+                if 'complete_after_hours' not in columns:
+                    cursor.execute('ALTER TABLE events ADD COLUMN complete_after_hours INTEGER DEFAULT 1')
+                    logger.info("Coluna 'complete_after_hours' adicionada à tabela events")
+                
+                # Atualizar eventos existentes para ter status 'ativo' e type 'unico'
+                cursor.execute('UPDATE events SET status = "ativo" WHERE status IS NULL')
+                cursor.execute('UPDATE events SET type = "unico" WHERE type IS NULL')
+                cursor.execute('UPDATE events SET auto_complete = 1 WHERE auto_complete IS NULL')
+                cursor.execute('UPDATE events SET complete_after_hours = 1 WHERE complete_after_hours IS NULL')
+                logger.info("Eventos existentes atualizados com valores padrão")
             
-            if 'recurrence_details' not in columns:
-                cursor.execute('ALTER TABLE events ADD COLUMN recurrence_details TEXT')
-                print("Coluna 'recurrence_details' adicionada à tabela events")
+            self.connection.commit()
+            logger.info(f"Banco de dados configurado: {self.db_path}")
             
-            # Atualizar eventos existentes para ter status 'ativo' e type 'unico'
-            cursor.execute('UPDATE events SET status = "ativo" WHERE status IS NULL')
-            cursor.execute('UPDATE events SET type = "unico" WHERE type IS NULL')
-            print("Eventos existentes atualizados com valores padrão")
-        
-        self.connection.commit()
-        print(f"Banco de dados configurado: {self.db_path}")
+        except Exception as e:
+            logger.error(f"Erro ao configurar banco de dados: {e}")
+            raise
     
     def get_connection(self):
         """Retorna a conexão com o banco de dados"""
-        if self.connection is None:
-            self.connection = sqlite3.connect(self.db_path)
-        return self.connection
+        try:
+            if self.connection is None:
+                self.connection = sqlite3.connect(self.db_path)
+                logger.debug("Nova conexão com banco de dados estabelecida")
+            return self.connection
+        except Exception as e:
+            logger.error(f"Erro ao obter conexão com banco de dados: {e}")
+            raise
     
     def close_connection(self):
         """Fecha a conexão com o banco de dados"""
-        if self.connection:
-            self.connection.close()
-            self.connection = None
+        try:
+            if self.connection:
+                self.connection.close()
+                self.connection = None
+                logger.debug("Conexão com banco de dados fechada")
+        except Exception as e:
+            logger.error(f"Erro ao fechar conexão com banco de dados: {e}")
     
     def update_event_date(self, event_id: int, new_date: str, new_time: str) -> bool:
         """
@@ -105,10 +135,17 @@ class DatabaseContext:
             ''', (new_date, new_time, event_id))
             
             conn.commit()
-            return cursor.rowcount > 0
+            success = cursor.rowcount > 0
+            
+            if success:
+                logger.info(f"Evento {event_id} atualizado para {new_date} {new_time}")
+            else:
+                logger.warning(f"Evento {event_id} não encontrado para atualização")
+            
+            return success
             
         except Exception as e:
-            print(f"Erro ao atualizar data do evento: {e}")
+            logger.error(f"Erro ao atualizar data do evento {event_id}: {e}")
             return False
     
     def alter_event(self, event_id: int, **kwargs) -> bool:
@@ -133,7 +170,7 @@ class DatabaseContext:
             update_fields = {k: v for k, v in kwargs.items() if k in allowed_fields and v is not None}
             
             if not update_fields:
-                print("Nenhum campo válido fornecido para atualização")
+                logger.warning("Nenhum campo válido fornecido para atualização")
                 return False
             
             # Construir query dinamicamente
@@ -151,12 +188,14 @@ class DatabaseContext:
             
             updated = cursor.rowcount > 0
             if updated:
-                print(f"Evento {event_id} atualizado: {list(update_fields.keys())}")
+                logger.info(f"Evento {event_id} atualizado: {list(update_fields.keys())}")
+            else:
+                logger.warning(f"Evento {event_id} não encontrado para alteração")
             
             return updated
             
         except Exception as e:
-            print(f"Erro ao alterar evento: {e}")
+            logger.error(f"Erro ao alterar evento {event_id}: {e}")
             return False
 
 # Instância global do contexto do banco de dados

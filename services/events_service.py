@@ -1,6 +1,10 @@
 import sqlite3
+import logging
 from datetime import datetime, timedelta
 from dados.database import get_connection, update_event_date, alter_event
+
+# Configurar logging
+logger = logging.getLogger(__name__)
 
 class EventsService:
     """Serviço para gerenciar operações de eventos no banco de dados"""
@@ -25,7 +29,7 @@ class EventsService:
             return event_datetime > current_datetime
             
         except ValueError as e:
-            print(f"Erro ao validar data/hora: {e}")
+            logger.error(f"Erro ao validar data/hora: {e}")
             return False
     
     @staticmethod
@@ -86,12 +90,13 @@ class EventsService:
             return True
             
         except Exception as e:
-            print(f"Erro ao adicionar evento único: {e}")
+            logger.error(f"Erro ao adicionar evento único: {e}")
             return False
     
     @staticmethod
     def add_recurring_event(name: str, start_date: str, time: str, link: str, 
-                          frequency_option: str, recurrence_detail_input: str = None, created_by: int = None) -> bool:
+                          frequency_option: str, recurrence_detail_input: str = None, created_by: int = None,
+                          auto_complete_config: dict = None) -> bool:
         """
         Adiciona um novo evento recorrente ao banco de dados
         
@@ -116,29 +121,37 @@ class EventsService:
             try:
                 datetime.strptime(start_date, '%d/%m/%Y')
             except ValueError:
-                print(f"Formato de data inválido: {start_date}. Use DD/MM/YYYY")
+                logger.error(f"Formato de data inválido: {start_date}. Use DD/MM/YYYY")
                 return False
             
             # Validar formato da hora
             try:
                 datetime.strptime(time, '%H:%M')
             except ValueError:
-                print(f"Formato de hora inválido: {time}. Use HH:MM")
+                logger.error(f"Formato de hora inválido: {time}. Use HH:MM")
                 return False
             
             conn = get_connection()
             cursor = conn.cursor()
             
+            # Processar configurações de auto-conclusão
+            auto_complete = 1  # Padrão: True
+            complete_after_hours = 1  # Padrão: 1 hora
+            
+            if auto_complete_config and frequency_option == "Não se repete":
+                auto_complete = 1 if auto_complete_config.get('auto_complete', True) else 0
+                complete_after_hours = auto_complete_config.get('complete_after_hours', 1)
+            
             cursor.execute('''
-                INSERT INTO events (name, date, time, link, created_by, type, status, frequency, recurrence_details)
-                VALUES (?, ?, ?, ?, ?, 'recorrente', 'ativo', ?, ?)
-            ''', (name, start_date, time, link, created_by, frequency_option, recurrence_detail_input))
+                INSERT INTO events (name, date, time, link, created_by, type, status, frequency, recurrence_details, auto_complete, complete_after_hours)
+                VALUES (?, ?, ?, ?, ?, 'recorrente', 'ativo', ?, ?, ?, ?)
+            ''', (name, start_date, time, link, created_by, frequency_option, recurrence_detail_input, auto_complete, complete_after_hours))
             
             conn.commit()
             return True
             
         except Exception as e:
-            print(f"Erro ao adicionar evento recorrente: {e}")
+            logger.error(f"Erro ao adicionar evento recorrente: {e}")
             return False
     
     @staticmethod
@@ -161,74 +174,97 @@ class EventsService:
             current_time = datetime.strptime(current_time_str, "%H:%M").time()
             
             # Mapear opções do Discord para cálculos
-            if "Diariamente" in frequency_option:
-                next_date = current_date + timedelta(days=1)
+            if frequency_option == "Não se repete":
+                # Evento único, não calcular próxima ocorrência
+                logger.info("Evento único, não há próxima ocorrência")
+                return None, None
                 
             elif "Semanalmente a cada" in frequency_option:
-                # Extrair dia da semana da opção
-                weekday_map = {
-                    "Segunda-feira": 0, "Terça-feira": 1, "Quarta-feira": 2,
-                    "Quinta-feira": 3, "Sexta-feira": 4, "Sábado": 5, "Domingo": 6
-                }
-                
-                for day_name, day_num in weekday_map.items():
-                    if day_name in frequency_option:
-                        # Calcular próxima ocorrência do dia da semana
-                        days_ahead = (day_num - current_date.weekday()) % 7
-                        if days_ahead == 0:  # Se é hoje, vai para próxima semana
-                            days_ahead = 7
-                        next_date = current_date + timedelta(days=days_ahead)
-                        break
-                else:
-                    next_date = current_date + timedelta(weeks=1)
+                # Sempre avançar 7 dias para eventos semanais
+                next_date = current_date + timedelta(weeks=1)
+                logger.info(f"Evento semanal: próxima ocorrência em {next_date.strftime('%d/%m/%Y')}")
                     
             elif "Quinzenalmente a cada" in frequency_option:
-                # Similar ao semanal, mas 14 dias
-                weekday_map = {
-                    "Segunda-feira": 0, "Terça-feira": 1, "Quarta-feira": 2,
-                    "Quinta-feira": 3, "Sexta-feira": 4, "Sábado": 5, "Domingo": 6
-                }
-                
-                for day_name, day_num in weekday_map.items():
-                    if day_name in frequency_option:
-                        days_ahead = (day_num - current_date.weekday()) % 7
-                        if days_ahead == 0:
-                            days_ahead = 14
-                        else:
-                            days_ahead += 7
-                        next_date = current_date + timedelta(days=days_ahead)
-                        break
-                else:
-                    next_date = current_date + timedelta(weeks=2)
+                # Sempre avançar 14 dias para eventos quinzenais
+                next_date = current_date + timedelta(weeks=2)
+                logger.info(f"Evento quinzenal: próxima ocorrência em {next_date.strftime('%d/%m/%Y')}")
                     
-            elif "Mensalmente no dia" in frequency_option:
+            elif frequency_option == "Mensalmente (mesmo dia)":
                 # Próximo mês, mesmo dia
                 if current_date.month == 12:
                     next_date = current_date.replace(year=current_date.year + 1, month=1)
                 else:
                     next_date = current_date.replace(month=current_date.month + 1)
+                logger.info(f"Evento mensal (mesmo dia): próxima ocorrência em {next_date.strftime('%d/%m/%Y')}")
                     
-            elif "Anualmente no dia" in frequency_option:
+            elif "No(a)" in frequency_option and "de cada mês" in frequency_option:
+                # Evento mensal com posição específica (primeira, segunda, etc.)
+                if current_date.month == 12:
+                    next_date = current_date.replace(year=current_date.year + 1, month=1, day=1)
+                else:
+                    next_date = current_date.replace(month=current_date.month + 1, day=1)
+                
+                # Extrair informações da frequência
+                parts = frequency_option.split()
+                position = parts[1]  # primeira, segunda, terceira, quarta, última
+                weekday_name = parts[2]  # Segunda-feira, Terça-feira, etc.
+                
+                # Mapear nome do dia para número
+                weekday_map = {
+                    "Segunda-feira": 0, "Terça-feira": 1, "Quarta-feira": 2,
+                    "Quinta-feira": 3, "Sexta-feira": 4, "Sábado": 5, "Domingo": 6
+                }
+                weekday_num = weekday_map.get(weekday_name, 0)
+                
+                # Encontrar a ocorrência correta
+                if position == "última":
+                    # Última ocorrência do mês
+                    last_occurrence = None
+                    temp_date = next_date
+                    while temp_date.month == next_date.month:
+                        if temp_date.weekday() == weekday_num:
+                            last_occurrence = temp_date
+                        temp_date += timedelta(days=1)
+                    next_date = last_occurrence
+                else:
+                    # Primeira, segunda, terceira ou quarta ocorrência
+                    position_map = {"primeira": 1, "segunda": 2, "terceira": 3, "quarta": 4}
+                    target_occurrence = position_map.get(position, 1)
+                    
+                    occurrences = 0
+                    while occurrences < target_occurrence:
+                        if next_date.weekday() == weekday_num:
+                            occurrences += 1
+                        if occurrences < target_occurrence:
+                            next_date += timedelta(days=1)
+                            
+                logger.info(f"Evento mensal ({position} {weekday_name}): próxima ocorrência em {next_date.strftime('%d/%m/%Y')}")
+                    
+            elif frequency_option == "Anualmente (mesmo dia)":
                 # Próximo ano, mesmo dia e mês
                 next_date = current_date.replace(year=current_date.year + 1)
+                logger.info(f"Evento anual: próxima ocorrência em {next_date.strftime('%d/%m/%Y')}")
                 
             elif "Todos os dias úteis" in frequency_option:
                 # Próximo dia útil (segunda a sexta)
                 next_date = current_date + timedelta(days=1)
                 while next_date.weekday() >= 5:  # Sábado ou domingo
                     next_date += timedelta(days=1)
+                logger.info(f"Evento dias úteis: próxima ocorrência em {next_date.strftime('%d/%m/%Y')}")
                     
             else:
-                # Fallback: avançar 1 dia
+                # Fallback: avançar 1 dia para qualquer frequência não reconhecida
+                logger.warning(f"Frequência não reconhecida: {frequency_option}, usando fallback de 1 dia")
                 next_date = current_date + timedelta(days=1)
             
             next_date_str = next_date.strftime("%d/%m/%Y")
             next_time_str = current_time_str
             
+            logger.info(f"Próxima ocorrência calculada: {next_date_str} {next_time_str} para frequência '{frequency_option}'")
             return next_date_str, next_time_str
             
         except Exception as e:
-            print(f"Erro ao calcular próxima ocorrência: {e}")
+            logger.error(f"Erro ao calcular próxima ocorrência: {e}")
             return None, None
     
     @staticmethod
@@ -253,7 +289,7 @@ class EventsService:
             return alter_event(event_id, **kwargs)
             
         except Exception as e:
-            print(f"Erro ao alterar evento: {e}")
+            logger.error(f"Erro ao alterar evento: {e}")
             return False
     
     @staticmethod
@@ -286,7 +322,7 @@ class EventsService:
             return events
             
         except Exception as e:
-            print(f"Erro ao buscar eventos recorrentes vencidos: {e}")
+            logger.error(f"Erro ao buscar eventos recorrentes vencidos: {e}")
             return []
     
     @staticmethod
@@ -305,11 +341,11 @@ class EventsService:
         try:
             success = update_event_date(event_id, next_date_str, next_time_str)
             if success:
-                print(f"Evento {event_id} atualizado para {next_date_str} {next_time_str}")
+                logger.info(f"Evento {event_id} atualizado para {next_date_str} {next_time_str}")
             return success
             
         except Exception as e:
-            print(f"Erro ao atualizar evento para próxima ocorrência: {e}")
+            logger.error(f"Erro ao atualizar evento para próxima ocorrência: {e}")
             return False
     
     @staticmethod
@@ -337,7 +373,7 @@ class EventsService:
             return cursor.rowcount > 0
             
         except Exception as e:
-            print(f"Erro ao marcar evento como concluído: {e}")
+            logger.error(f"Erro ao marcar evento como concluído: {e}")
             return False
     
     @staticmethod
@@ -369,7 +405,7 @@ class EventsService:
             return events
             
         except Exception as e:
-            print(f"Erro ao buscar eventos ativos para usuários: {e}")
+            logger.error(f"Erro ao buscar eventos ativos para usuários: {e}")
             return []
     
     @staticmethod
@@ -394,7 +430,7 @@ class EventsService:
             return events
             
         except Exception as e:
-            print(f"Erro ao buscar eventos para moderação: {e}")
+            logger.error(f"Erro ao buscar eventos para moderação: {e}")
             return []
     
     @staticmethod
@@ -425,7 +461,7 @@ class EventsService:
             return events
             
         except Exception as e:
-            print(f"Erro ao buscar eventos da semana: {e}")
+            logger.error(f"Erro ao buscar eventos da semana: {e}")
             return []
     
     @staticmethod
@@ -450,7 +486,7 @@ class EventsService:
             return events
             
         except Exception as e:
-            print(f"Erro ao buscar todos os eventos: {e}")
+            logger.error(f"Erro ao buscar todos os eventos: {e}")
             return []
     
     @staticmethod
@@ -478,7 +514,7 @@ class EventsService:
             return event
             
         except Exception as e:
-            print(f"Erro ao buscar evento por ID: {e}")
+            logger.error(f"Erro ao buscar evento por ID: {e}")
             return None
     
     @staticmethod
@@ -502,73 +538,193 @@ class EventsService:
             return cursor.rowcount > 0
             
         except Exception as e:
-            print(f"Erro ao remover evento: {e}")
+            logger.error(f"Erro ao remover evento: {e}")
             return False 
 
+ 
+
     @staticmethod
-    def check_and_remove_duplicates() -> dict:
+    def get_week_events_for_users() -> list:
         """
-        Verifica e remove eventos duplicados no banco de dados
+        Busca eventos ativos da semana atual para usuários
         
         Returns:
-            dict: Estatísticas da limpeza
+            list: Lista de tuplas com os dados dos eventos (id, name, date, time, link)
         """
         try:
             conn = get_connection()
             cursor = conn.cursor()
             
-            # Buscar eventos duplicados (mesmo nome, data, hora e tipo)
+            # Calcular início e fim da semana atual
+            today = datetime.now()
+            week_start = today - timedelta(days=today.weekday())
+            week_end = week_start + timedelta(days=6)
+            
+            # Data e hora atual
+            now = datetime.now()
+            current_date = now.strftime('%d/%m/%Y')
+            current_time = now.strftime('%H:%M')
+            
             cursor.execute('''
-                SELECT name, date, time, type, COUNT(*) as count
+                SELECT id, name, date, time, link
                 FROM events
-                WHERE status = 'ativo'
-                GROUP BY name, date, time, type
-                HAVING COUNT(*) > 1
-            ''')
+                WHERE status = 'ativo' 
+                AND date >= ? AND date <= ?
+                AND (date > ? OR (date = ? AND time > ?))
+                ORDER BY date, time
+            ''', (week_start.strftime('%d/%m/%Y'), week_end.strftime('%d/%m/%Y'), 
+                  current_date, current_date, current_time))
             
-            duplicates = cursor.fetchall()
-            
-            if not duplicates:
-                return {
-                    'success': True,
-                    'duplicates_found': 0,
-                    'removed': 0,
-                    'message': 'Nenhum evento duplicado encontrado'
-                }
-            
-            total_removed = 0
-            
-            for duplicate in duplicates:
-                name, date, time, event_type, count = duplicate
-                
-                # Manter apenas o primeiro evento (menor ID) e remover os outros
-                cursor.execute('''
-                    DELETE FROM events 
-                    WHERE name = ? AND date = ? AND time = ? AND type = ? AND status = 'ativo'
-                    AND id NOT IN (
-                        SELECT MIN(id) 
-                        FROM events 
-                        WHERE name = ? AND date = ? AND time = ? AND type = ? AND status = 'ativo'
-                    )
-                ''', (name, date, time, event_type, name, date, time, event_type))
-                
-                removed_count = cursor.rowcount
-                total_removed += removed_count
-                print(f"Removidos {removed_count} eventos duplicados: {name} ({date} {time})")
-            
-            conn.commit()
-            
-            return {
-                'success': True,
-                'duplicates_found': len(duplicates),
-                'removed': total_removed,
-                'message': f'Removidos {total_removed} eventos duplicados de {len(duplicates)} grupos'
-            }
+            events = cursor.fetchall()
+            logger.info(f"Encontrados {len(events)} eventos da semana para usuários")
+            return events
             
         except Exception as e:
-            print(f"Erro ao verificar duplicatas: {e}")
-            return {
-                'success': False,
-                'error': str(e),
-                'message': f'Erro ao verificar duplicatas: {e}'
-            } 
+            logger.error(f"Erro ao buscar eventos da semana para usuários: {e}")
+            return []
+    
+    @staticmethod
+    def get_filtered_events_for_moderation(filter_type: str = "todos") -> list:
+        """
+        Busca eventos filtrados para moderação
+        
+        Args:
+            filter_type: Tipo de filtro ("todos", "ativos", "concluidos", "cancelados", "adiados", "ultimos", "semana")
+            
+        Returns:
+            list: Lista de tuplas com os dados dos eventos
+        """
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            
+            if filter_type == "todos":
+                # Todos os eventos
+                cursor.execute('''
+                    SELECT id, name, date, time, link, created_by, type, status, frequency, recurrence_details
+                    FROM events
+                    ORDER BY date DESC, time DESC
+                ''')
+                
+            elif filter_type == "ativos":
+                # Apenas eventos ativos
+                cursor.execute('''
+                    SELECT id, name, date, time, link, created_by, type, status, frequency, recurrence_details
+                    FROM events
+                    WHERE status = 'ativo'
+                    ORDER BY date DESC, time DESC
+                ''')
+                
+            elif filter_type == "concluidos":
+                # Apenas eventos concluídos
+                cursor.execute('''
+                    SELECT id, name, date, time, link, created_by, type, status, frequency, recurrence_details
+                    FROM events
+                    WHERE status = 'concluido'
+                    ORDER BY date DESC, time DESC
+                ''')
+                
+            elif filter_type == "cancelados":
+                # Apenas eventos cancelados
+                cursor.execute('''
+                    SELECT id, name, date, time, link, created_by, type, status, frequency, recurrence_details
+                    FROM events
+                    WHERE status = 'cancelado'
+                    ORDER BY date DESC, time DESC
+                ''')
+                
+            elif filter_type == "adiados":
+                # Apenas eventos adiados
+                cursor.execute('''
+                    SELECT id, name, date, time, link, created_by, type, status, frequency, recurrence_details
+                    FROM events
+                    WHERE status = 'adiado'
+                    ORDER BY date DESC, time DESC
+                ''')
+                
+            elif filter_type == "ultimos":
+                # Últimos 10 eventos adicionados
+                cursor.execute('''
+                    SELECT id, name, date, time, link, created_by, type, status, frequency, recurrence_details
+                    FROM events
+                    ORDER BY id DESC
+                    LIMIT 10
+                ''')
+                
+            elif filter_type == "semana":
+                # Eventos da semana atual
+                today = datetime.now()
+                week_start = today - timedelta(days=today.weekday())
+                week_end = week_start + timedelta(days=6)
+                
+                cursor.execute('''
+                    SELECT id, name, date, time, link, created_by, type, status, frequency, recurrence_details
+                    FROM events
+                    WHERE date >= ? AND date <= ?
+                    ORDER BY date, time
+                ''', (week_start.strftime('%d/%m/%Y'), week_end.strftime('%d/%m/%Y')))
+                
+            else:
+                # Filtro inválido, retornar todos
+                logger.warning(f"Filtro inválido '{filter_type}', retornando todos os eventos")
+                cursor.execute('''
+                    SELECT id, name, date, time, link, created_by, type, status, frequency, recurrence_details
+                    FROM events
+                    ORDER BY date DESC, time DESC
+                ''')
+            
+            events = cursor.fetchall()
+            logger.info(f"Encontrados {len(events)} eventos com filtro '{filter_type}' para moderação")
+            return events
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar eventos filtrados para moderação: {e}")
+            return [] 
+
+    @staticmethod
+    def get_unique_events_past_due_for_auto_complete() -> list:
+        """
+        Busca eventos únicos vencidos que devem ser auto-concluídos
+        
+        Returns:
+            list: Lista de tuplas com os dados dos eventos (id, name, date, time, auto_complete, complete_after_hours)
+        """
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            
+            # Data e hora atual
+            now = datetime.now()
+            current_date = now.strftime('%d/%m/%Y')
+            current_time = now.strftime('%H:%M')
+            
+            cursor.execute('''
+                SELECT id, name, date, time, auto_complete, complete_after_hours
+                FROM events
+                WHERE type = 'unico' 
+                AND status = 'ativo'
+                AND auto_complete = 1
+                AND (date < ? OR (date = ? AND time < ?))
+            ''', (current_date, current_date, current_time))
+            
+            events = cursor.fetchall()
+            
+            # Filtrar eventos que já passaram do tempo de auto-conclusão
+            events_to_complete = []
+            for event in events:
+                event_id, name, date, time, auto_complete, complete_after_hours = event
+                
+                # Calcular quando o evento deve ser concluído
+                event_datetime = datetime.strptime(f"{date} {time}", "%d/%m/%Y %H:%M")
+                complete_datetime = event_datetime + timedelta(hours=complete_after_hours)
+                
+                # Se já passou do tempo de conclusão, adicionar à lista
+                if now >= complete_datetime:
+                    events_to_complete.append(event)
+            
+            logger.info(f"Encontrados {len(events_to_complete)} eventos únicos vencidos para auto-conclusão")
+            return events_to_complete
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar eventos únicos vencidos para auto-conclusão: {e}")
+            return [] 

@@ -1,82 +1,99 @@
 import discord
 from discord.ext import commands, tasks
+import logging
 from services import event_handlers
 from services import event_scheduler
 from services import event_choices
 from services import events_service
 
+# Configurar logging
+logger = logging.getLogger(__name__)
+
 class Events(commands.Cog):
     """Cog para gerenciar eventos do servidor"""
+    
+    # Variável de classe para controlar se a tarefa já está rodando
+    _task_running = False
     
     def __init__(self, bot):
         self.bot = bot
         # Verificar se a tarefa já está rodando antes de iniciar
-        if not self.recurring_event_updater.is_running():
+        if not Events._task_running and not self.recurring_event_updater.is_running():
+            logger.info("Iniciando background task para eventos recorrentes")
             self.recurring_event_updater.start()
+            Events._task_running = True
+        else:
+            logger.info("Background task já está em execução, pulando inicialização")
     
     def cog_unload(self):
         """Para a tarefa quando o cog é descarregado"""
-        self.recurring_event_updater.cancel()
+        if self.recurring_event_updater.is_running():
+            logger.info("Parando background task de eventos recorrentes")
+            self.recurring_event_updater.cancel()
+            Events._task_running = False
     
     @tasks.loop(hours=1)  # Executar a cada hora
     async def recurring_event_updater(self):
-        """Atualiza eventos recorrentes que já passaram"""
-        print("Verificando eventos recorrentes vencidos...")
+        """Atualiza eventos recorrentes que já passaram e auto-conclui eventos únicos"""
+        logger.info("Executando verificação de eventos recorrentes vencidos...")
         result = event_scheduler.EventScheduler.update_recurring_events()
         if result['success']:
-            print(result['message'])
+            logger.info(f"Verificação concluída: {result['message']}")
         else:
-            print(f"Erro: {result['error']}")
+            logger.error(f"Erro na verificação: {result['error']}")
+        
+        # Auto-concluir eventos únicos vencidos
+        logger.info("Executando verificação de eventos únicos para auto-conclusão...")
+        auto_complete_result = event_scheduler.EventScheduler.auto_complete_unique_events()
+        if auto_complete_result['success']:
+            logger.info(f"Auto-conclusão concluída: {auto_complete_result['message']}")
+        else:
+            logger.error(f"Erro na auto-conclusão: {auto_complete_result['error']}")
     
     @recurring_event_updater.before_loop
     async def before_recurring_event_updater(self):
         """Aguarda o bot estar pronto antes de iniciar a tarefa"""
         await self.bot.wait_until_ready()
+        logger.info("Bot pronto, background task iniciada")
     
-    @discord.app_commands.command(name="addevento_unico", description="Adiciona um novo evento único (apenas administradores)")
-    @discord.app_commands.describe(
-        nome="Nome do evento",
-        data="Data do evento (DD/MM/YYYY)",
-        hora="Hora do evento (HH:MM)",
-        link="Link do evento (opcional)"
-    )
-    @discord.app_commands.checks.has_permissions(administrator=True)
-    async def addevento_unico(self, interaction: discord.Interaction, nome: str, data: str, hora: str, link: str = None):
-        """Adiciona um novo evento único ao calendário (apenas administradores)"""
-        success, embed = await event_handlers.EventHandlers.handle_add_unique_event(
-            interaction, nome, data, hora, link
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=not success)
+
     
-    @addevento_unico.error
-    async def addevento_unico_error(self, interaction: discord.Interaction, error):
-        """Trata erros do comando addevento_unico"""
-        embed = await event_handlers.EventHandlers.handle_permission_error(interaction, error)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-    
-    @discord.app_commands.command(name="addrecorrente", description="Adiciona um novo evento recorrente (apenas administradores)")
+    @discord.app_commands.command(name="addevento", description="Adiciona um novo evento (único ou recorrente) (apenas administradores)")
     @discord.app_commands.describe(
         nome="Nome do evento",
         data_inicio="Data de início (DD/MM/YYYY)",
         hora="Hora do evento (HH:MM)",
-        frequencia="Frequência do evento",
+        frequencia="Frequência do evento (escolha 'Não se repete' para evento único)",
         detalhes="Detalhes da recorrência (opcional)",
-        link="Link do evento (opcional)"
+        link="Link do evento (opcional)",
+        auto_concluir="Auto-conclusão: 'Sim' para concluir automaticamente após o evento, 'Não' para manter ativo (apenas eventos únicos)",
+        tempo_conclusao="Tempo de espera: 30min, 1h, 2h, 3h, 6h, 12h ou 24h após o evento para auto-conclusão (apenas eventos únicos)"
     )
     @discord.app_commands.choices(frequencia=event_choices.FREQUENCY_CHOICES)
     @discord.app_commands.choices(detalhes=event_choices.DETAILS_CHOICES)
+    @discord.app_commands.choices(auto_concluir=event_choices.AUTO_COMPLETE_CHOICES)
+    @discord.app_commands.choices(tempo_conclusao=event_choices.AUTO_COMPLETE_TIME_CHOICES)
     @discord.app_commands.checks.has_permissions(administrator=True)
-    async def addrecorrente(self, interaction: discord.Interaction, nome: str, data_inicio: str, hora: str, 
-                          frequencia: discord.app_commands.Choice[str], detalhes: discord.app_commands.Choice[str] = None, link: str = None):
-        """Adiciona um novo evento recorrente ao calendário (apenas administradores)"""
-        success, embed = await event_handlers.EventHandlers.handle_add_recurring_event(
-            interaction, nome, data_inicio, hora, frequencia, detalhes, link
+    async def addevento(self, interaction: discord.Interaction, nome: str, data_inicio: str, hora: str, 
+                          frequencia: discord.app_commands.Choice[str], detalhes: discord.app_commands.Choice[str] = None, 
+                          link: str = None, auto_concluir: discord.app_commands.Choice[str] = None, 
+                          tempo_conclusao: discord.app_commands.Choice[str] = None):
+        """Adiciona um novo evento (único ou recorrente) ao calendário (apenas administradores)"""
+        success, response = await event_handlers.EventHandlers.handle_add_recurring_event(
+            interaction, nome, data_inicio, hora, frequencia, detalhes, link, auto_concluir, tempo_conclusao
         )
-        await interaction.response.send_message(embed=embed, ephemeral=not success)
+        
+        # Verificar se é uma resposta especial (embed + view para seleção mensal)
+        if not success and isinstance(response, tuple) and len(response) == 2:
+            embed, view = response
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        else:
+            # Resposta normal (embed apenas)
+            await interaction.response.send_message(embed=response, ephemeral=not success)
     
-    @addrecorrente.error
-    async def addrecorrente_error(self, interaction: discord.Interaction, error):
-        """Trata erros do comando addrecorrente"""
+    @addevento.error
+    async def addevento_error(self, interaction: discord.Interaction, error):
+        """Trata erros do comando addevento"""
         embed = await event_handlers.EventHandlers.handle_permission_error(interaction, error)
         await interaction.response.send_message(embed=embed, ephemeral=True)
     
@@ -119,11 +136,17 @@ class Events(commands.Cog):
         success, embed = await event_handlers.EventHandlers.handle_list_user_events(interaction)
         await interaction.response.send_message(embed=embed, ephemeral=not success)
     
-    @discord.app_commands.command(name="modeventos", description="Lista todos os eventos para moderação (apenas administradores)")
+    @discord.app_commands.command(name="modeventos", description="Lista eventos para moderação com filtros (apenas administradores)")
+    @discord.app_commands.describe(
+        filtro="Filtro para listar eventos específicos"
+    )
+    @discord.app_commands.choices(filtro=event_choices.FILTER_CHOICES)
     @discord.app_commands.checks.has_permissions(administrator=True)
-    async def modeventos(self, interaction: discord.Interaction):
-        """Lista todos os eventos para moderação (apenas administradores)"""
-        success, embed = await event_handlers.EventHandlers.handle_list_mod_events(interaction)
+    async def modeventos(self, interaction: discord.Interaction, filtro: discord.app_commands.Choice[str] = None):
+        """Lista eventos para moderação com filtros (apenas administradores)"""
+        # Usar "todos" como padrão se nenhum filtro for especificado
+        filter_value = filtro.value if filtro else "todos"
+        success, embed = await event_handlers.EventHandlers.handle_list_mod_events(interaction, filter_value)
         await interaction.response.send_message(embed=embed, ephemeral=True)
     
     @modeventos.error
@@ -148,47 +171,9 @@ class Events(commands.Cog):
         embed = await event_handlers.EventHandlers.handle_permission_error(interaction, error)
         await interaction.response.send_message(embed=embed, ephemeral=True)
     
-    @discord.app_commands.command(name="limpar_duplicatas", description="Remove eventos duplicados do banco de dados (apenas administradores)")
-    @discord.app_commands.checks.has_permissions(administrator=True)
-    async def limpar_duplicatas(self, interaction: discord.Interaction):
-        """Remove eventos duplicados do banco de dados (apenas administradores)"""
-        try:
-            result = events_service.EventsService.check_and_remove_duplicates()
-            
-            if result['success']:
-                embed = discord.Embed(
-                    title="🧹 Limpeza de Duplicatas",
-                    description=result['message'],
-                    color=discord.Color.green()
-                )
-                if result['removed'] > 0:
-                    embed.add_field(
-                        name="📊 Estatísticas",
-                        value=f"**Encontrados:** {result['duplicates_found']} grupos de duplicatas\n**Removidos:** {result['removed']} eventos",
-                        inline=False
-                    )
-            else:
-                embed = discord.Embed(
-                    title="❌ Erro na Limpeza",
-                    description=result['message'],
-                    color=discord.Color.red()
-                )
-            
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            
-        except Exception as e:
-            embed = discord.Embed(
-                title="❌ Erro",
-                description=f"Erro ao limpar duplicatas: {e}",
-                color=discord.Color.red()
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-    
-    @limpar_duplicatas.error
-    async def limpar_duplicatas_error(self, interaction: discord.Interaction, error):
-        """Trata erros do comando limpar_duplicatas"""
-        embed = await event_handlers.EventHandlers.handle_permission_error(interaction, error)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+
 
 async def setup(bot):
     """Função necessária para carregar o Cog"""

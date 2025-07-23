@@ -3,10 +3,32 @@ version: '3.8'
 services:
   stem-bot:
     build: .
+    container_name: stem-bot
     restart: unless-stopped
     env_file:
       - .env
     volumes:
       - ./dados:/app/dados
+      - ./logs:/app/logs
     environment:
-      - PYTHONUNBUFFERED=1 
+      - PYTHONUNBUFFERED=1
+      - TZ=America/Sao_Paulo
+    networks:
+      - bot-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+networks:
+  bot-network:
+    driver: bridge 

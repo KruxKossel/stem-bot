@@ -117,9 +117,89 @@ Sincronizados 10 comandos slash globalmente
 ```
 **Solução:** Ative a permissão "Manage Server" nas configurações do servidor.
 
+## 🔗 Adicionar Bot ao Servidor
+
+### **Como Gerar o Link de Convite:**
+
+#### **1. Acesse o Discord Developer Portal:**
+- Vá para [Discord Developer Portal](https://discord.com/developers/applications)
+- Selecione sua aplicação
+
+#### **2. Configure OAuth2:**
+- Vá para **OAuth2** > **URL Generator**
+- Selecione os escopos:
+  - ✅ **bot**
+  - ✅ **applications.commands**
+
+#### **3. Configure Permissões:**
+- **Manage Server** (Gerenciar Servidor) - OBRIGATÓRIO
+- **Use Application Commands** (Usar Comandos de Aplicação) - OBRIGATÓRIO
+- **Send Messages** (Enviar Mensagens)
+- **View Channels** (Ver Canais)
+- **Read Message History** (Ler Histórico)
+- **Manage Messages** (Gerenciar Mensagens)
+- **Embed Links** (Incorporar Links)
+
+#### **4. Copie o Link Gerado:**
+O Discord gerará automaticamente um link como:
+```
+https://discord.com/oauth2/authorize?client_id=SEU_BOT_ID&permissions=PERMISSOES&scope=bot+applications.commands
+```
+
+### **Permissões Incluídas:**
+- ✅ **Administrador** (permissions=8)
+- ✅ **Bot** (scope=bot)
+- ✅ **Comandos de Aplicação** (scope=applications.commands)
+
+## 🚀 Como Adicionar o Bot
+
+### **1. Usar o Link de Convite**
+1. **Copie o link gerado acima**
+2. **Cole no navegador**
+3. **Selecione o servidor** onde quer adicionar o bot
+4. **Autorize o bot**
+
+### **2. Verificar Permissões**
+Após adicionar, verifique se o bot tem as permissões necessárias:
+
+#### **Permissões Essenciais:**
+- ✅ **Manage Server** (OBRIGATÓRIO para sincronizar comandos)
+- ✅ **Use Application Commands** (OBRIGATÓRIO para comandos slash)
+- ✅ **Send Messages** (para responder comandos)
+- ✅ **View Channels** (para acessar canais)
+- ✅ **Read Message History** (para ler histórico)
+- ✅ **Manage Messages** (para moderação)
+
+### **3. Configurar Canais**
+Configure os canais específicos para o bot:
+
+#### **Canais Necessários:**
+- **Canal de Boas-vindas**: ID configurável (veja [CONFIGURAR_CANAIS.md](CONFIGURAR_CANAIS.md))
+- **Canal de Saídas**: ID configurável (veja [CONFIGURAR_CANAIS.md](CONFIGURAR_CANAIS.md))
+- **Canal de Comandos**: Qualquer canal onde o bot tenha permissões
+
+## ⚠️ Importante
+
+### **Se o bot já está no servidor:**
+1. **Remova o bot** do servidor
+2. **Use o link acima** para adicionar novamente
+3. **Isso garantirá** que o bot tenha todas as permissões necessárias
+
+### **Após adicionar o bot:**
+1. **Execute**: `python bot.py`
+2. **Aguarde** a sincronização dos comandos
+3. **Teste**: `/ping`
+
+## 🎯 Resultado Esperado
+
+Após usar o link correto, o bot deve:
+- ✅ Responder a comandos slash (`/ping`)
+- ✅ Não mostrar mais "Integração desconhecida"
+- ✅ Aparecer online no servidor
+
 ## 🔗 Próximos Passos
 
-1. **Adicionar Bot ao Servidor**: Veja [ADICIONAR_BOT.md](ADICIONAR_BOT.md)
+1. **Configurar Canais**: Veja [CONFIGURAR_CANAIS.md](CONFIGURAR_CANAIS.md)
 2. **Testar Comandos**: Veja [SOLUCAO_PROBLEMAS.md](SOLUCAO_PROBLEMAS.md)
 3. **Desenvolver Novas Funcionalidades**: Veja [DESENVOLVIMENTO.md](DESENVOLVIMENTO.md)
 

@@ -16,7 +16,12 @@ class Welcome(commands.Cog):
         
         if welcome_channel:
             # Verificar se o bot tem permissão para enviar mensagens no canal
-            if not welcome_channel.permissions_for(member.guild.me).send_messages:
+            bot_member = member.guild.me
+            if bot_member is None:
+                print("Bot member não encontrado no guild")
+                return
+                
+            if not welcome_channel.permissions_for(bot_member).send_messages:
                 print(f"Bot não tem permissão para enviar mensagens no canal de boas-vindas: {welcome_channel.name}")
                 return
             
@@ -72,7 +77,12 @@ class Welcome(commands.Cog):
         
         if leave_channel:
             # Verificar se o bot tem permissão para enviar mensagens no canal
-            if not leave_channel.permissions_for(member.guild.me).send_messages:
+            bot_member = member.guild.me
+            if bot_member is None:
+                print("Bot member não encontrado no guild")
+                return
+                
+            if not leave_channel.permissions_for(bot_member).send_messages:
                 print(f"Bot não tem permissão para enviar mensagens no canal de saídas: {leave_channel.name}")
                 return
             

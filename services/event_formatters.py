@@ -34,7 +34,7 @@ class EventFormatters:
     @staticmethod
     def build_user_events_embed(events_list: list) -> discord.Embed:
         """
-        Constrói um Embed formatado para usuários finais
+        Constrói um Embed formatado para usuários finais (eventos da semana atual)
         
         Args:
             events_list: Lista de tuplas de eventos (id, name, date, time, link)
@@ -44,15 +44,15 @@ class EventFormatters:
         """
         if not events_list:
             embed = discord.Embed(
-                title="📅 Eventos Ativos",
-                description="Nenhum evento ativo programado no momento.",
+                title="📅 Eventos da Semana",
+                description="Nenhum evento ativo programado para esta semana.",
                 color=discord.Color.blue()
             )
             return embed
         
         embed = discord.Embed(
-            title="📅 Eventos Ativos",
-            description="Próximos eventos programados:",
+            title="📅 Eventos da Semana",
+            description="Eventos ativos programados para esta semana:",
             color=discord.Color.blue()
         )
         
@@ -63,7 +63,7 @@ class EventFormatters:
             formatted_date = EventFormatters._format_date_with_day(date)
             
             # Construir informações do evento
-            event_info = f"📅 {formatted_date} às {time}"
+            event_info = f" {formatted_date} às {time}"
             if link:
                 event_info += f"\n🔗 [Clique aqui para ver o evento]({link})"
             
@@ -76,26 +76,49 @@ class EventFormatters:
         return embed
     
     @staticmethod
-    def build_mod_events_embed(events_list: list) -> discord.Embed:
+    def build_mod_events_embed(events_list: list, filter_type: str = "todos") -> discord.Embed:
         """
-        Constrói um Embed formatado para moderadores
+        Constrói um Embed formatado para moderadores com filtros
         
         Args:
             events_list: Lista de tuplas de eventos completos (id, name, date, time, link, created_by, type, status, frequency, recurrence_details)
+            filter_type: Tipo de filtro aplicado
             
         Returns:
             discord.Embed: Embed formatado para moderadores
         """
         if not events_list:
+            filter_names = {
+                "todos": "Todos os eventos",
+                "ativos": "Eventos ativos",
+                "concluidos": "Eventos concluídos",
+                "cancelados": "Eventos cancelados",
+                "adiados": "Eventos adiados",
+                "ultimos": "Últimos eventos adicionados",
+                "semana": "Eventos da semana atual"
+            }
+            filter_name = filter_names.get(filter_type, "Eventos")
+            
             embed = discord.Embed(
-                title="Moderação - Eventos",
-                description="Nenhum evento encontrado no banco de dados.",
+                title=f"Moderação - {filter_name}",
+                description="Nenhum evento encontrado com este filtro.",
                 color=discord.Color.blue()
             )
             return embed
         
+        filter_names = {
+            "todos": "Todos os Eventos",
+            "ativos": "Eventos Ativos",
+            "concluidos": "Eventos Concluídos",
+            "cancelados": "Eventos Cancelados",
+            "adiados": "Eventos Adiados",
+            "ultimos": "Últimos Eventos Adicionados",
+            "semana": "Eventos da Semana Atual"
+        }
+        filter_name = filter_names.get(filter_type, "Eventos")
+        
         embed = discord.Embed(
-            title="Moderação - Todos os Eventos",
+            title=f"Moderação - {filter_name}",
             description=f"Total de eventos: {len(events_list)}",
             color=discord.Color.purple()
         )
