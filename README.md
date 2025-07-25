@@ -20,12 +20,18 @@ Bot Discord para a comunidade STEM GIRL com sistema de eventos e boas-vindas.
 
 ```
 stem-bot/
-├── 📁 cogs/           # Comandos do bot
-├── 📁 services/       # Lógica de negócio
-├── 📁 dados/          # Banco de dados
+├── 📁 cogs/           # Comandos e interface do usuário
+├── 📁 services/       # Lógica de negócio e operações
+├── 📁 components/     # Componentes reutilizáveis
+├── 📁 dados/          # Camada de dados
 ├── 📁 orientacoes/    # Documentação
+├── 📁 logs/           # Logs do sistema
 ├── bot.py             # Arquivo principal
-└── requirements.txt   # Dependências
+├── logging_config.py  # Configuração de logs
+├── requirements.txt   # Dependências
+├── .env               # Variáveis de ambiente
+├── Dockerfile         # Configuração Docker
+└── docker-compose.yml # Orquestração Docker
 ```
 
 ## 🚀 Como Executar
@@ -40,7 +46,6 @@ Crie um arquivo `.env` com:
 ```
 TOKEN=seu_token_do_bot
 ```
-
 ### 3. **Executar o Bot**
 ```bash
 python bot.py
@@ -82,3 +87,4 @@ python bot.py
 ## 📞 Suporte
 
 Para dúvidas ou problemas, consulte a documentação na pasta `orientacoes/`.
+
