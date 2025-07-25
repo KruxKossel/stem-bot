@@ -1,9 +1,9 @@
 import discord
 from discord.ext import commands, tasks
 import logging
-from services import event_handlers
+from components.handlers import event_handlers
 from services import event_scheduler
-from services import event_choices
+from components.choices import event_choices
 from services import events_service
 
 # Configurar logging

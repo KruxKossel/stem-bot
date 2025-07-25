@@ -2,7 +2,7 @@
 
 ## 📋 Visão Geral
 
-O Bot STEM-GIRL possui um sistema completo de gerenciamento de eventos que permite criar, listar, alterar e concluir eventos únicos e recorrentes.
+O Bot STEM GIRL possui um sistema completo de gerenciamento de eventos que permite criar, listar, alterar e concluir eventos únicos e recorrentes.
 
 ## 🎯 Tipos de Eventos
 
@@ -74,10 +74,15 @@ O Bot STEM-GIRL possui um sistema completo de gerenciamento de eventos que permi
 - `nome` - Novo nome (opcional)
 - `data` - Nova data (opcional)
 - `hora` - Nova hora (opcional)
-- `frequencia` - Nova frequência (opcional)
+- `frequencia` - Nova frequência (opcional) - **⚠️ Altera automaticamente o tipo do evento**
 - `detalhes` - Novos detalhes (opcional)
 - `link` - Novo link (opcional)
 - `status` - Novo status (opcional)
+
+**Comportamento Automático:**
+- ✅ **Alteração de Tipo**: Quando você altera a frequência, o tipo do evento é atualizado automaticamente:
+  - `"Não se repete"` → Tipo: `único`
+  - Qualquer outra frequência → Tipo: `recorrente`
 
 **Exemplo:**
 ```bash
@@ -211,6 +216,13 @@ A auto-conclusão é uma funcionalidade que permite que eventos únicos sejam ma
 - ✅ **Botões** para selecionar semana do mês
 - ✅ **Opções**: Primeira, segunda, terceira, quarta, última semana
 
+### **4. Atualização Automática de Tipo:**
+- ✅ **Alteração de Frequência**: Quando você altera a frequência de um evento, o tipo é atualizado automaticamente
+- ✅ **Lógica Inteligente**: 
+  - `"Não se repete"` → Tipo: `único`
+  - Qualquer outra frequência → Tipo: `recorrente`
+- ✅ **Consistência**: Garante que o tipo sempre corresponda à frequência
+
 ## 📋 Exemplos Práticos
 
 ### **Criando um Workshop:**
@@ -226,6 +238,19 @@ A auto-conclusão é uma funcionalidade que permite que eventos únicos sejam ma
 ### **Criando um Evento Mensal:**
 ```bash
 /addevento nome:"Encontro Mensal" data_inicio:"15/12/2024" hora:"19:00" frequencia:"Mensalmente (mesmo dia da semana)" detalhes:"Primeira semana"
+```
+
+### **Alterando Frequência (Tipo Atualizado Automaticamente):**
+```bash
+# Evento original: recorrente semanal
+# Alterando para evento único
+/alterarevento id_evento:5 frequencia:"Não se repete"
+# Resultado: Tipo automaticamente alterado para "único"
+
+# Evento original: único
+# Alterando para evento recorrente
+/alterarevento id_evento:6 frequencia:"Semanalmente a cada Segunda-feira"
+# Resultado: Tipo automaticamente alterado para "recorrente"
 ```
 
 ## 🎯 Casos de Uso Recomendados

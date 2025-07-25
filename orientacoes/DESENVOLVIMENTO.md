@@ -2,7 +2,7 @@
 
 ## 📋 Visão Geral
 
-Este guia é para desenvolvedores que querem contribuir ou estender o Bot STEM-GIRL.
+Este guia é para desenvolvedores que querem contribuir ou estender o Bot STEM GIRL.
 
 ## 🛠️ Ambiente de Desenvolvimento
 

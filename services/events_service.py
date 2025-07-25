@@ -142,10 +142,13 @@ class EventsService:
                 auto_complete = 1 if auto_complete_config.get('auto_complete', True) else 0
                 complete_after_hours = auto_complete_config.get('complete_after_hours', 1)
             
+            # Determinar tipo baseado na frequência
+            event_type = EventsService._determine_event_type(frequency_option)
+            
             cursor.execute('''
                 INSERT INTO events (name, date, time, link, created_by, type, status, frequency, recurrence_details, auto_complete, complete_after_hours)
-                VALUES (?, ?, ?, ?, ?, 'recorrente', 'ativo', ?, ?, ?, ?)
-            ''', (name, start_date, time, link, created_by, frequency_option, recurrence_detail_input, auto_complete, complete_after_hours))
+                VALUES (?, ?, ?, ?, ?, ?, 'ativo', ?, ?, ?, ?)
+            ''', (name, start_date, time, link, created_by, event_type, frequency_option, recurrence_detail_input, auto_complete, complete_after_hours))
             
             conn.commit()
             return True
@@ -268,6 +271,22 @@ class EventsService:
             return None, None
     
     @staticmethod
+    def _determine_event_type(frequency: str) -> str:
+        """
+        Determina o tipo do evento baseado na frequência
+        
+        Args:
+            frequency: Frequência do evento
+            
+        Returns:
+            str: 'unico' ou 'recorrente'
+        """
+        if frequency == "Não se repete":
+            return "unico"
+        else:
+            return "recorrente"
+    
+    @staticmethod
     def alter_event(event_id: int, **kwargs) -> bool:
         """
         Altera campos específicos de um evento
@@ -284,6 +303,12 @@ class EventsService:
             if 'date' in kwargs and 'time' in kwargs:
                 if not EventsService._validate_future_datetime(kwargs['date'], kwargs['time']):
                     raise ValueError("A nova data e hora devem ser no futuro")
+            
+            # Se a frequência foi alterada, atualizar automaticamente o tipo
+            if 'frequency' in kwargs:
+                new_type = EventsService._determine_event_type(kwargs['frequency'])
+                kwargs['type'] = new_type
+                logger.info(f"Tipo do evento {event_id} atualizado para '{new_type}' baseado na frequência '{kwargs['frequency']}'")
             
             # Usar função do banco de dados
             return alter_event(event_id, **kwargs)

@@ -1,7 +1,7 @@
 import discord
 from services import events_service
-from services import event_formatters
-from services import event_validators
+from components.formatters import event_formatters
+from components.validators import event_validators
 
 class EventHandlers:
     """Classe para gerenciar a lógica de negócio dos comandos de eventos"""

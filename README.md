@@ -1,6 +1,6 @@
-# 🤖 Bot STEM-GIRL
+# 🤖 Bot STEM GIRL
 
-Bot Discord para a comunidade STEM-GIRL com sistema de eventos e boas-vindas.
+Bot Discord para a comunidade STEM GIRL com sistema de eventos e boas-vindas.
 
 ## 🚀 Funcionalidades
 

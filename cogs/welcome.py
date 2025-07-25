@@ -31,7 +31,7 @@ class Welcome(commands.Cog):
                 
                 # Embed detalhado
                 embed = discord.Embed(
-                    title="🎉 Bem-vinda ao STEM-GIRL!",
+                    title="🎉 Bem-vinda ao STEM GIRL!",
                     description=f"Olá **{member.name}**! Seja muito bem-vinda à nossa comunidade!",
                     color=discord.Color.green()
                 )

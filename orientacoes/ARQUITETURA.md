@@ -2,7 +2,7 @@
 
 ## 📋 Visão Geral
 
-O Bot STEM-GIRL foi desenvolvido seguindo uma **arquitetura modular** com separação clara de responsabilidades, facilitando manutenção, testes e escalabilidade.
+O Bot STEM GIRL foi desenvolvido seguindo uma **arquitetura modular** com separação clara de responsabilidades, facilitando manutenção, testes e escalabilidade.
 
 ## 🗂️ Estrutura de Arquivos
 
@@ -12,14 +12,19 @@ stem-bot/
 │   ├── events.py      # Sistema de eventos
 │   ├── welcome.py     # Sistema de boas-vindas
 │   └── __init__.py
-├── 📁 services/       # Lógica de negócio
-│   ├── events_service.py      # Operações de eventos
-│   ├── event_formatters.py    # Formatação de embeds
-│   ├── event_handlers.py      # Handlers de comandos
-│   ├── event_validators.py    # Validação de dados
-│   ├── event_scheduler.py     # Agendador de eventos
-│   ├── event_choices.py       # Opções de comandos
+├── 📁 services/       # Lógica de negócio e operações
+│   ├── events_service.py      # Operações de eventos (CRUD)
+│   ├── event_scheduler.py     # Agendador de eventos recorrentes
 │   └── __init__.py
+├── 📁 components/     # Componentes reutilizáveis
+│   ├── formatters/    # Formatação de embeds e mensagens
+│   │   └── event_formatters.py
+│   ├── validators/    # Validação de dados de entrada
+│   │   └── event_validators.py
+│   ├── handlers/      # Handlers de comandos e orquestração
+│   │   └── event_handlers.py
+│   └── choices/       # Opções predefinidas para comandos
+│       └── event_choices.py
 ├── 📁 dados/          # Camada de dados
 │   ├── database.py    # Contexto do banco
 │   ├── stem_bot.db    # Banco SQLite
@@ -50,16 +55,28 @@ stem-bot/
 - ✅ Executar operações no banco de dados
 - ✅ Fornecer interface para Cogs
 - ✅ Centralizar queries SQL
+- ✅ Gerenciar tarefas agendadas
 
 #### **Services Disponíveis:**
 - **`events_service.py`**: Operações de eventos (CRUD)
-- **`event_formatters.py`**: Formatação de embeds e mensagens
-- **`event_handlers.py`**: Handlers de comandos e lógica de negócio
-- **`event_validators.py`**: Validação de dados de entrada
 - **`event_scheduler.py`**: Agendador de eventos recorrentes
-- **`event_choices.py`**: Opções predefinidas para comandos slash
 
-### 3. **Camada de Dados** (`dados/`)
+### 3. **Camada de Componentes** (`components/`)
+
+#### **Responsabilidades:**
+- ✅ Fornecer componentes reutilizáveis
+- ✅ Formatação de UI e mensagens
+- ✅ Validação de dados
+- ✅ Orquestração de comandos
+- ✅ Configurações e constantes
+
+#### **Componentes Disponíveis:**
+- **`formatters/event_formatters.py`**: Formatação de embeds e mensagens
+- **`validators/event_validators.py`**: Validação de dados de entrada
+- **`handlers/event_handlers.py`**: Handlers de comandos e lógica de negócio
+- **`choices/event_choices.py`**: Opções predefinidas para comandos slash
+
+### 4. **Camada de Dados** (`dados/`)
 
 #### **Responsabilidades:**
 - ✅ Gerenciar conexão com SQLite
@@ -70,7 +87,7 @@ stem-bot/
 - **`database.py`**: Contexto e configuração do banco
 - **`stem_bot.db`**: Arquivo do banco SQLite
 
-### 4. **Aplicação Principal** (`bot.py`)
+### 5. **Aplicação Principal** (`bot.py`)
 
 #### **Responsabilidades:**
 - ✅ Configurar e inicializar o bot
@@ -105,22 +122,26 @@ stem-bot/
 
 ### **1. Separação de Responsabilidades**
 - **Cogs**: Apenas interface e comandos
-- **Services**: Apenas lógica de negócio
+- **Services**: Apenas lógica de negócio e operações
+- **Components**: Apenas componentes reutilizáveis
 - **Database**: Apenas persistência de dados
 
 ### **2. Manutenibilidade**
 - Mudanças no banco não afetam comandos
 - Queries centralizadas nos services
+- Componentes isolados e testáveis
 - Fácil localizar e corrigir problemas
 
 ### **3. Testabilidade**
 - Services podem ser testados isoladamente
+- Components podem ser testados independentemente
 - Mocks podem substituir banco de dados
 - Comandos testáveis independentemente
 
 ### **4. Escalabilidade**
 - Fácil adicionar novos Cogs
 - Services reutilizáveis entre Cogs
+- Components reutilizáveis entre funcionalidades
 - Estrutura preparada para crescimento
 
 ## 🚀 Como Estender
@@ -134,6 +155,11 @@ stem-bot/
 1. Criar `services/novo_service.py`
 2. Implementar lógica de negócio
 3. Importar no Cog correspondente
+
+### **Adicionar Novo Componente:**
+1. Criar pasta apropriada em `components/`
+2. Implementar funcionalidade específica
+3. Importar onde necessário
 
 ### **Adicionar Nova Tabela:**
 1. Atualizar `dados/database.py`
